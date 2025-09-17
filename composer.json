@@ -1,0 +1,20 @@
+{
+  "name": "toxin23/eventqr-tickets",
+  "description": "QR-based ticketing system for events",
+  "type": "project",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Toxin23\\EventqrTickets\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Toxin23"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "endroid/qr-code": "^5.1"
+  }
+}
