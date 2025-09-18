@@ -1,9 +1,9 @@
 <?php
-$host = 'containers-us-west-123.railway.app';
+$host = 'shinkansen.proxy.rlwy.net';
 $db   = 'railway';
 $user = 'root';
-$pass = 'your_actual_password';
-$port = 3306;
+$pass = 'CLLEalwgSpDVGxCEjnUNwKbonlxvEBNy';
+$port = 26593;
 
 try {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db", $user, $pass);
