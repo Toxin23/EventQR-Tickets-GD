@@ -1,4 +1,5 @@
 <?php
+require_once 'session.php';
 require_once __DIR__ . '/../config/db.php';
 
 $total = $pdo->query("SELECT COUNT(*) FROM tickets")->fetchColumn();
