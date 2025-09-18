@@ -9,7 +9,17 @@ $name = $_POST['name'] ?? 'Guest';
 $event = $_POST['event'] ?? 'EventQR';
 
 // Path to QR code image
-$qrPath = "qrcodes/$code.png";
+$qrFile = __DIR__ . "/qrcodes/$code.png";
+
+// Check if QR file exists
+if (!file_exists($qrFile)) {
+    echo "❌ QR code not found.";
+    exit;
+}
+
+// Convert QR image to base64
+$qrData = base64_encode(file_get_contents($qrFile));
+$qrImage = "data:image/png;base64,$qrData";
 
 // HTML content for the PDF
 $html = "
@@ -30,7 +40,7 @@ $html = "
     <p><strong>Name:</strong> $name</p>
     <p><strong>Event:</strong> $event</p>
     <p><strong>Ticket Code:</strong> $code</p>
-    <img src='$qrPath' width='150' alt='QR Code'>
+    <img src='$qrImage' width='150' alt='QR Code'>
     <p style='margin-top: 10px;'>Present this QR code at the entrance</p>
   </div>
 ";
