@@ -3,25 +3,25 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use Dompdf\Dompdf;
 
-// Collect POST data
+// 🧾 Collect POST data
 $code = $_POST['ticket_code'] ?? 'Unknown';
 $name = $_POST['name'] ?? 'Guest';
 $event = $_POST['event'] ?? 'EventQR';
 
-// Path to QR code image
+// 📁 Path to QR code image
 $qrFile = __DIR__ . "/qrcodes/$code.png";
 
-// Check if QR file exists
+// ❌ Handle missing QR file
 if (!file_exists($qrFile)) {
-    echo "❌ QR code not found.";
+    echo "<h3>QR code not found for ticket #$code</h3>";
     exit;
 }
 
-// Convert QR image to base64
+// 🔄 Convert QR image to base64
 $qrData = base64_encode(file_get_contents($qrFile));
 $qrImage = "data:image/png;base64,$qrData";
 
-// HTML content for the PDF
+// 🖨️ HTML content for PDF
 $html = "
   <style>
     body { font-family: Arial, sans-serif; }
@@ -32,8 +32,9 @@ $html = "
       margin: auto;
       text-align: center;
     }
-    h1 { color: #0057b7; }
+    h1 { color: #0057b7; margin-bottom: 10px; }
     img { margin-top: 15px; }
+    .footer { font-size: 12px; color: #666; margin-top: 20px; }
   </style>
   <div class='ticket-box'>
     <h1>🎟️ EventQR Ticket</h1>
@@ -41,11 +42,11 @@ $html = "
     <p><strong>Event:</strong> $event</p>
     <p><strong>Ticket Code:</strong> $code</p>
     <img src='$qrImage' width='150' alt='QR Code'>
-    <p style='margin-top: 10px;'>Present this QR code at the entrance</p>
+    <p class='footer'>Present this QR code at the entrance</p>
   </div>
 ";
 
-// Generate and stream PDF
+// 🧾 Generate and stream PDF
 $dompdf = new Dompdf();
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A5', 'portrait');
