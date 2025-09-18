@@ -17,32 +17,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // 🎟️ Generate numeric ticket code
-    $ticketCode = rand(100000, 999999); // Or use auto-increment ID later
+    // 💾 Insert ticket without ticket_code
+    $stmt = $pdo->prepare("INSERT INTO tickets (name, email, payment_method, qr_code, payment_status) VALUES (?, ?, ?, '', ?)");
+    $stmt->execute([$name, $email, $payment, 'Paid']);
 
-    // 🎯 Generate QR code
-    $qrPath = QRGenerator::generate((string)$ticketCode);
+    // 🔄 Get auto-incremented ID
+    $ticketId = $pdo->lastInsertId();
 
-    // 💾 Save to database
-    $stmt = $pdo->prepare("INSERT INTO tickets (name, email, payment_method, ticket_code, qr_code, payment_status) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->execute([
-        $name,
-        $email,
-        $payment,
-        $ticketCode,
-        basename($qrPath),
-        'Paid'
-    ]);
+    // 🎯 Generate QR code using ID
+    $qrPath = QRGenerator::generate((string)$ticketId);
+
+    // 📝 Update ticket_code and qr_code
+    $update = $pdo->prepare("UPDATE tickets SET ticket_code = ?, qr_code = ? WHERE id = ?");
+    $update->execute([$ticketId, basename($qrPath), $ticketId]);
 
     // 📧 Send email
-    Mailer::sendTicket($email, $name, $ticketCode, $qrPath);
+    Mailer::sendTicket($email, $name, $ticketId, $qrPath);
 
     // 🖼️ Output
     echo "<h2>✅ Ticket Generated</h2>";
     echo "<p><strong>Name:</strong> $name</p>";
     echo "<p><strong>Email:</strong> $email</p>";
     echo "<p><strong>Payment Method:</strong> $payment</p>";
-    echo "<p><strong>Ticket Code:</strong> $ticketCode</p>";
+    echo "<p><strong>Ticket Code (ID):</strong> $ticketId</p>";
     echo "<img src='qrcodes/" . basename($qrPath) . "' alt='QR Code'>";
 } else {
     // 📝 Form UI
