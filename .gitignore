@@ -331,3 +331,5 @@ ASALocalRun/
 
 /vendor/
 /public/qrcodes/*.png
+
+.env
