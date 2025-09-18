@@ -17,9 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // 🧾 Status values
+    $paymentStatus = 1;         // Numeric: 1 = Paid
+    $statusLabel = 'Paid';      // Readable label
+
     // 💾 Insert ticket without ticket_code
-    $stmt = $pdo->prepare("INSERT INTO tickets (name, email, payment_method, qr_code, payment_status) VALUES (?, ?, ?, '', ?)");
-    $stmt->execute([$name, $email, $payment, 'Paid']);
+    $stmt = $pdo->prepare("INSERT INTO tickets (name, email, payment_method, qr_code, payment_status, status_label) VALUES (?, ?, ?, '', ?, ?)");
+    $stmt->execute([$name, $email, $payment, $paymentStatus, $statusLabel]);
 
     // 🔄 Get auto-incremented ID
     $ticketId = $pdo->lastInsertId();
@@ -40,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echo "<p><strong>Email:</strong> $email</p>";
     echo "<p><strong>Payment Method:</strong> $payment</p>";
     echo "<p><strong>Ticket Code (ID):</strong> $ticketId</p>";
+    echo "<p><strong>Status:</strong> $statusLabel</p>";
     echo "<img src='qrcodes/" . basename($qrPath) . "' alt='QR Code'>";
 } else {
     // 📝 Form UI
