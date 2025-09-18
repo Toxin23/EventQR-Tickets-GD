@@ -1,11 +1,29 @@
 <?php
-
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../src/QRGenerator.php';
 require_once __DIR__ . '/../src/Mailer.php';
 
 use App\QRGenerator;
+use App\Mailer;
+
+// 🔐 Encrypt ticket code: letters → numbers, digits stay, symbols → 99
+function encryptTicketCode(string $code): string {
+    $map = array_flip(range('A', 'Z')); // A=0, B=1, ..., Z=25
+    $encoded = '';
+
+    foreach (str_split(strtoupper($code)) as $char) {
+        if (ctype_alpha($char)) {
+            $encoded .= str_pad($map[$char] + 1, 2, '0', STR_PAD_LEFT);
+        } elseif (ctype_digit($char)) {
+            $encoded .= $char;
+        } else {
+            $encoded .= '99'; // Optional: encode symbols as 99
+        }
+    }
+
+    return $encoded;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = htmlspecialchars($_POST['name'] ?? 'Guest');
@@ -17,23 +35,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $ticketCode = 'TKT_' . uniqid();
-    $qrPath = QRGenerator::generate($ticketCode);
+    // 🔄 Generate and encrypt ticket code
+    $ticketCodeRaw = 'TKT_' . uniqid();
+    $ticketCodeEncrypted = encryptTicketCode($ticketCodeRaw);
 
-    // Save to DB
-    $stmt = $pdo->prepare("INSERT INTO tickets (name, email, payment_method, ticket_code) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$name, $email, $payment, $ticketCode]);
+    // 🎯 Generate QR code
+    $qrPath = QRGenerator::generate($ticketCodeEncrypted);
 
-    // Send email
-    Mailer::sendTicket($email, $name, $ticketCode, $qrPath);
+    // 💾 Save to database
+    $stmt = $pdo->prepare("INSERT INTO tickets (name, email, payment_method, ticket_code, qr_code, payment_status) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([
+        $name,
+        $email,
+        $payment,
+        $ticketCodeEncrypted,
+        basename($qrPath),
+        'Paid'
+    ]);
 
-    echo "<h2>Ticket Generated</h2>";
-    echo "<p>Name: $name</p>";
-    echo "<p>Email: $email</p>";
-    echo "<p>Payment Method: $payment</p>";
-    echo "<p>Ticket Code: $ticketCode</p>";
+    // 📧 Send email
+    Mailer::sendTicket($email, $name, $ticketCodeEncrypted, $qrPath);
+
+    // 🖼️ Output
+    echo "<h2>✅ Ticket Generated</h2>";
+    echo "<p><strong>Name:</strong> $name</p>";
+    echo "<p><strong>Email:</strong> $email</p>";
+    echo "<p><strong>Payment Method:</strong> $payment</p>";
+    echo "<p><strong>Encrypted Ticket Code:</strong> $ticketCodeEncrypted</p>";
     echo "<img src='qrcodes/" . basename($qrPath) . "' alt='QR Code'>";
 } else {
+    // 📝 Form UI
     echo '<form method="POST" class="container mt-5">
         <input name="name" class="form-control mb-2" placeholder="Name">
         <input name="email" class="form-control mb-2" placeholder="Email">
