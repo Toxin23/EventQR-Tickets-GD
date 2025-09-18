@@ -1,8 +1,13 @@
 {
-  "name": "PHP with GD",
+  "name": "EventQR-Tickets-GD",
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "forwardPorts": [8080],
-  "postCreateCommand": "composer install"
+  "forwardPorts": [80],
+  "postCreateCommand": "composer install",
+  "customizations": {
+    "vscode": {
+      "extensions": ["felixfbecker.php-debug"]
+    }
+  }
 }
