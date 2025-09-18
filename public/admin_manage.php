@@ -1,6 +1,7 @@
 <?php
 require_once 'session.php';
 require_once __DIR__ . '/../config/db.php';
+
 $tickets = $pdo->query("SELECT * FROM tickets ORDER BY id DESC")->fetchAll();
 ?>
 
@@ -10,6 +11,8 @@ $tickets = $pdo->query("SELECT * FROM tickets ORDER BY id DESC")->fetchAll();
   <title>Manage Tickets</title>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
+    body { font-family: Arial; padding: 20px; }
+    .logout { float: right; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     select { padding: 4px; }
@@ -17,6 +20,8 @@ $tickets = $pdo->query("SELECT * FROM tickets ORDER BY id DESC")->fetchAll();
 </head>
 <body>
   <h2>🎟️ Admin Ticket Manager</h2>
+  <a href="admin_logout.php" class="logout">🚪 Logout</a>
+
   <table>
     <tr>
       <th>ID</th>
