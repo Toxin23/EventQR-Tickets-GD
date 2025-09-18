@@ -1,19 +1,18 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
-
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
-
-$host = $_ENV['DB_HOST'];
-$db   = $_ENV['DB_NAME'];
-$user = $_ENV['DB_USER'];
-$pass = $_ENV['DB_PASS'];
-$port = $_ENV['DB_PORT'];
+// Load environment variables
+$host = getenv('DB_HOST') ?: 'shinkansen.proxy.rlwy.net';
+$db   = getenv('DB_NAME') ?: 'railway';
+$user = getenv('DB_USER') ?: 'root';
+$pass = getenv('DB_PASS') ?: 'CLLEalwgSpDVGxCEjnUNwKbonlxvEBNy';
+$port = getenv('DB_PORT') ?: 26593;
 
 try {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    return $pdo;
+    // Optional: set default fetch mode
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    // Optional: set charset
+    $pdo->exec("SET NAMES 'utf8mb4'");
 } catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+    die("❌ Database connection failed: " . $e->getMessage());
 }
