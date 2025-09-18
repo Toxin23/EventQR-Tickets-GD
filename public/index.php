@@ -35,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $update = $pdo->prepare("UPDATE tickets SET ticket_code = ?, qr_code = ? WHERE id = ?");
     $update->execute([$ticketId, basename($qrPath), $ticketId]);
 
-    // 📧 Send email
-    Mailer::sendTicket($email, $name, $ticketId, $qrPath);
+    // 📧 Send email with full ticket details
+    Mailer::sendTicket($email, $name, $ticketId, $qrPath, $payment, $statusLabel);
 
     // 🖼️ Output
     echo "<h2>✅ Ticket Generated</h2>";
