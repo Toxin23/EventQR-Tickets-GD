@@ -1,74 +1,72 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../src/QRGenerator.php';
-require_once __DIR__ . '/../src/Mailer.php';
-
-use App\QRGenerator;
-use App\Mailer;
-
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = htmlspecialchars($_POST['name'] ?? 'Guest');
-    $email = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
-    $payment = htmlspecialchars($_POST['payment'] ?? 'Unknown');
+    $name = $_POST['name'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $event_name = $_POST['event_name'] ?? '';
+    $payment_method = $_POST['payment_method'] ?? '';
+    $ticket_code = uniqid('TKT-');
+    $status_label = 'Pending';
 
-    if (!$email) {
-        echo "❌ Invalid email address.";
-        exit;
-    }
+    // Generate QR code content
+    $qr_content = "Name: $name\nEmail: $email\nEvent: $event_name\nCode: $ticket_code";
 
-    // 🧾 Status values
-    $paymentStatus = 1; // Numeric: 1 = Paid
-    $statusLabel = 'Paid';
+    // Generate QR image
+    require_once __DIR__ . '/../vendor/autoload.php';
+    use Endroid\QrCode\QrCode;
+    use Dompdf\Dompdf;
 
-    // 💾 Insert ticket without ticket_code
-    $stmt = $pdo->prepare("INSERT INTO tickets (name, email, payment_method, qr_code, payment_status, status_label) VALUES (?, ?, ?, '', ?, ?)");
-    $stmt->execute([$name, $email, $payment, $paymentStatus, $statusLabel]);
+    $qrCode = new QrCode($qr_content);
+    $qrCode->setSize(200);
+    $qr_image = base64_encode($qrCode->writeString());
 
-    // 🔄 Get auto-incremented ID
-    $ticketId = $pdo->lastInsertId();
+    // Save to database
+    $stmt = $pdo->prepare("INSERT INTO tickets (name, email, event_name, ticket_code, qr_code, payment_method, status_label) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$name, $email, $event_name, $ticket_code, $qr_image, $payment_method, $status_label]);
 
-    // 🎯 Generate QR code using ID
-    $qrPath = QRGenerator::generate((string)$ticketId);
-
-    // 📝 Update ticket_code and qr_code
-    $update = $pdo->prepare("UPDATE tickets SET ticket_code = ?, qr_code = ? WHERE id = ?");
-    $update->execute([$ticketId, basename($qrPath), $ticketId]);
-
-    // 📧 Send email with full ticket details
-   // Mailer::sendTicket($email, $name, $ticketId, $qrPath, $payment, $statusLabel);
-
-    // 🖼️ Output confirmation
-    echo "<h2>✅ Ticket Generated</h2>";
-    echo "<p><strong>Name:</strong> $name</p>";
-    echo "<p><strong>Email:</strong> $email</p>";
-    echo "<p><strong>Payment Method:</strong> $payment</p>";
-    echo "<p><strong>Ticket Code (ID):</strong> $ticketId</p>";
-    echo "<p><strong>Status:</strong> $statusLabel</p>";
-    echo "<img src='qrcodes/" . basename($qrPath) . "' alt='QR Code' width='200'><br><br>";
-
-    // 📥 QR Code Download
-    echo "<a href='qrcodes/" . basename($qrPath) . "' download class='btn btn-outline-secondary'>Download QR Code</a><br><br>";
-
-    // 📄 PDF Ticket Download
-    echo "<form method='post' action='download_ticket.php'>
-        <input type='hidden' name='ticket_code' value='$ticketId'>
-        <input type='hidden' name='name' value='$name'>
-        <input type='hidden' name='event' value='EventQR'>
-        <button type='submit' class='btn btn-outline-primary'>Download PDF Ticket</button>
-    </form>";
-} else {
-    // 📝 Form UI
-    echo '<form method="POST" class="container mt-5">
-        <input name="name" class="form-control mb-2" placeholder="Name" required>
-        <input name="email" class="form-control mb-2" placeholder="Email" required>
-        <select name="payment" class="form-control mb-2">
-            <option value="SnapScan">SnapScan</option>
-            <option value="Card">Card</option>
-        </select>
-        <button type="submit" class="btn btn-primary">Generate Ticket</button>
-    </form>';
+    // Generate PDF ticket
+    $dompdf = new Dompdf();
+    $html = "
+        <h2>Event Ticket</h2>
+        <p><strong>Name:</strong> $name</p>
+        <p><strong>Email:</strong> $email</p>
+        <p><strong>Event:</strong> $event_name</p>
+        <p><strong>Ticket Code:</strong> $ticket_code</p>
+        <img src='data:image/png;base64,$qr_image' />
+    ";
+    $dompdf->loadHtml($html);
+    $dompdf->render();
+    $dompdf->stream("ticket_$ticket_code.pdf", ["Attachment" => false]);
+    exit;
 }
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EventQR Ticket Generator</title>
+</head>
+<body>
+    <h1>Get Your Event Ticket</h1>
+    <form method="POST">
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <label>Event Name:</label><br>
+        <input type="text" name="event_name" required><br><br>
+
+        <label>Payment Method:</label><br>
+        <select name="payment_method" required>
+            <option value="Cash">Cash</option>
+            <option value="EFT">EFT</option>
+            <option value="Card">Card</option>
+        </select><br><br>
+
+        <button type="submit">Generate Ticket</button>
+    </form>
+</body>
+</html>
