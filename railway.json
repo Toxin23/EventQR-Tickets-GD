@@ -1,0 +1,15 @@
+{
+  "build": {
+    "root": "public"
+  },
+  "deploy": {
+    "startCommand": "php -S 0.0.0.0:8080 -t public"
+  },
+  "env": {
+    "DB_HOST": "shinkansen.proxy.rlwy.net",
+    "DB_NAME": "railway",
+    "DB_USER": "root",
+    "DB_PASS": "CLLEalwgSpDVGxCEjnUNwKbonlxvEBNy",
+    "DB_PORT": "26593"
+  }
+}
