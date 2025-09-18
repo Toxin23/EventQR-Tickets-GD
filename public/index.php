@@ -7,24 +7,6 @@ require_once __DIR__ . '/../src/Mailer.php';
 use App\QRGenerator;
 use App\Mailer;
 
-// 🔐 Encrypt ticket code: letters → numbers, digits stay, symbols → 99
-function encryptTicketCode(string $code): string {
-    $map = array_flip(range('A', 'Z')); // A=0, B=1, ..., Z=25
-    $encoded = '';
-
-    foreach (str_split(strtoupper($code)) as $char) {
-        if (ctype_alpha($char)) {
-            $encoded .= str_pad($map[$char] + 1, 2, '0', STR_PAD_LEFT);
-        } elseif (ctype_digit($char)) {
-            $encoded .= $char;
-        } else {
-            $encoded .= '99'; // Optional: encode symbols as 99
-        }
-    }
-
-    return $encoded;
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = htmlspecialchars($_POST['name'] ?? 'Guest');
     $email = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
@@ -35,12 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // 🔄 Generate and encrypt ticket code
-    $ticketCodeRaw = 'TKT_' . uniqid();
-    $ticketCodeEncrypted = encryptTicketCode($ticketCodeRaw);
+    // 🎟️ Generate numeric ticket code
+    $ticketCode = rand(100000, 999999); // Or use auto-increment ID later
 
     // 🎯 Generate QR code
-    $qrPath = QRGenerator::generate($ticketCodeEncrypted);
+    $qrPath = QRGenerator::generate((string)$ticketCode);
 
     // 💾 Save to database
     $stmt = $pdo->prepare("INSERT INTO tickets (name, email, payment_method, ticket_code, qr_code, payment_status) VALUES (?, ?, ?, ?, ?, ?)");
@@ -48,20 +29,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name,
         $email,
         $payment,
-        $ticketCodeEncrypted,
+        $ticketCode,
         basename($qrPath),
         'Paid'
     ]);
 
     // 📧 Send email
-    Mailer::sendTicket($email, $name, $ticketCodeEncrypted, $qrPath);
+    Mailer::sendTicket($email, $name, $ticketCode, $qrPath);
 
     // 🖼️ Output
     echo "<h2>✅ Ticket Generated</h2>";
     echo "<p><strong>Name:</strong> $name</p>";
     echo "<p><strong>Email:</strong> $email</p>";
     echo "<p><strong>Payment Method:</strong> $payment</p>";
-    echo "<p><strong>Encrypted Ticket Code:</strong> $ticketCodeEncrypted</p>";
+    echo "<p><strong>Ticket Code:</strong> $ticketCode</p>";
     echo "<img src='qrcodes/" . basename($qrPath) . "' alt='QR Code'>";
 } else {
     // 📝 Form UI
