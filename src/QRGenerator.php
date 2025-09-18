@@ -1,16 +1,13 @@
 <?php
-
 declare(strict_types=1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
+namespace App;
 
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
 
-class QRGenerator
-{
-    public static function generate(string $ticketCode): string
-    {
+class QRGenerator {
+    public static function generate(string $ticketCode): string {
         $result = Builder::create()
             ->writer(new PngWriter())
             ->data($ticketCode)
