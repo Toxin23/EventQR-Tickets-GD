@@ -23,7 +23,6 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libxslt1-dev \
     libtidy-dev \
-    libmysqlclient-dev \
     default-mysql-client
 
 # Install PHP extensions
