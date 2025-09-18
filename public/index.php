@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $update->execute([$ticketId, basename($qrPath), $ticketId]);
 
     // 📧 Send email with full ticket details
-    Mailer::sendTicket($email, $name, $ticketId, $qrPath, $payment, $statusLabel);
+   // Mailer::sendTicket($email, $name, $ticketId, $qrPath, $payment, $statusLabel);
 
     // 🖼️ Output confirmation
     echo "<h2>✅ Ticket Generated</h2>";
