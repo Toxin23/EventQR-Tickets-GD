@@ -1,4 +1,10 @@
 <?php
+// ✅ Import required classes before any logic
+use Endroid\QrCode\QrCode;
+use Dompdf\Dompdf;
+
+// ✅ Load dependencies
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -13,10 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $qr_content = "Name: $name\nEmail: $email\nEvent: $event_name\nCode: $ticket_code";
 
     // Generate QR image
-    require_once __DIR__ . '/../vendor/autoload.php';
-    use Endroid\QrCode\QrCode;
-    use Dompdf\Dompdf;
-
     $qrCode = new QrCode($qr_content);
     $qrCode->setSize(200);
     $qr_image = base64_encode($qrCode->writeString());
